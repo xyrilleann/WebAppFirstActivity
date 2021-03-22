@@ -1,0 +1,59 @@
+﻿@model WebAppXyrille.Web.Areas.Manage.ViewModels.Products.EditViewModel
+@{
+        Layout = "~/areas/manage/views/shared/_managelayout.cshtml";
+}
+
+<h1>Edit</h1>
+
+
+<div class="container">
+    <div class="row">
+        <div class="col">
+            <form method="post" action="~/manage/products/edit">
+                @Html.AntiForgeryToken()
+                @Html.ValidationSummary()
+                <input type="hidden" name="Id" value="@Model.Id" />
+
+                <div class="form-group">
+                    <label for="productStatus" class="control-label mb-1">Product Status</label>
+                    <select class="form-control" id="productStatus" name="ProductStatus">
+                        @{
+                            var options = Enum.GetValues(typeof(WebAppXyrille.Web.Infrastructures.Domain.Enums.ProductStatus)).Cast<WebAppXyrille.Web.Infrastructures.Domain.Enums.ProductStatus>();
+
+                            foreach (WebAppXyrille.Web.Infrastructures.Domain.Enums.ProductStatus option in options)
+                            {
+                                <option value="@option">@option.ToString()</option>
+                            }
+                        }
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="name" class="control-label mb-2">Name</label>
+                    <input type="text" class="form-control" id="name" name="Name" aria-describedby="nameHelp" value="@Model.Name" placeholder="Enter Name">
+                </div>
+
+                <div class="form-group">
+                    <label for="description" class="control-label mb-2">Description</label>
+                    <input type="text" class="form-control" id="description" name="Description" aria-describedby="descriptionHelp" value="@Model.Description" placeholder="Enter Description">
+                </div>
+                <div class="form-group">
+                    <label for="quantity" class="control-label mb-2">Quantity</label>
+                    <input type="text" class="form-control" id="quantity" name="Quantity" value="@Model.Quantity" aria-describedby="quantityHelp" placeholder="Enter Quantity">
+                </div>
+
+                <div class="form-group">
+                    <label for="price" class="control-label mb-2">Price</label>
+                    <input type="text" class="form-control" id="price" name="Price" value="@Model.Price" aria-describedby="priceHelp" placeholder="Enter Price">
+                </div>
+
+
+
+                <div class="mt-2">
+                    <button type="submit" class="btn btn-primary">Submit</button>
+                    <a href="~/manage/products/details/@Model.Id" class="btn btn-danger">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+

@@ -1,0 +1,265 @@
+﻿@model WebAppXyrille.Web.Areas.Manage.ViewModels.Products.IndexViewModel
+@using WebAppXyrille.Web.Infrastructures.Domain.Enums
+@using WebAppXyrille.Web.Infrastructures.Domain.Models
+
+@{
+   Layout = "~/areas/manage/views/shared/_managelayout.cshtml";
+}
+
+<h1>Index</h1>
+
+
+<div class="row">
+    <div class="col-lg-5">
+        <div class="input-group mt-5">
+            <div class="input-group-prepend">
+                <span class="input-group-text" id="inputGroup-sizing-sm">Products</span>
+            </div>
+            <select class="form-control" aria-label="Small" aria-describedby="inputGroup-sizing-sm" id="searchStatus" onchange="searchTrigger()" placeholder="Product Status">
+                @{
+                    foreach (ProductStatus productStatus in Model.productStatuses)
+                    {
+                        if (Model.productStatus == productStatus)
+                        {
+                            <option value="@productStatus" selected>@productStatus.ToString()</option>
+                        }
+                        else
+                        {
+                            <option value="@productStatus">@productStatus.ToString()</option>
+                        }
+                    }
+                }
+            </select>
+        </div>
+    </div>
+
+    <div class="col-lg-3 ">
+        <div class="input-group mt-5">
+            <input type="text" id="searchKeyword" placeholder="search services" class="form-control" aria-label="search services" aria-describedby="basic-addon2" value="@Model.Products.Keyword">
+            <div class="input-group-append">
+                <span class="input-group-text" id="basic-addon2"><a href="#" onclick="searchTrigger()"><i class="fa fa-search" aria-hidden="true"></i></a></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-3">
+        <div class="table-responsive table--no-card m-b-30 mt-md-5">
+            <a href="~/manage/products/create" class="btn btn-lg-3 btn-success btn-block">
+                <i class="fa fa-plus"></i>&nbsp;
+                <span>Create Product</span>
+            </a>
+        </div>
+    </div>
+</div>
+<hr />
+
+
+@if (Model.Products.Items.Count > 0)
+{
+    <table class="table table-borderless table-striped table-hover">
+        <thead>
+            <tr class="table-info">
+                <th>Name</th>
+                <th>Quantity</th>
+                <th>Price</th>
+                <th>Status</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @{
+                foreach (Product product in Model.Products.Items)
+                {
+                    <tr>
+                        <td>@product.Name</td>
+                        <td>@product.Quantity</td>
+                        <td>@product.Price.ToString("F")</td>
+                        <td>@product.ProductStatus</td>
+                        <td>
+                            <a href="~/manage/products/details/@product.Id" title="Product Details"><button type="button" class="btn"><i class="fas fa-info"></i></button></a>
+                            <a href="#" onclick="confirmDeleteProduct('@product.Id', '@product.Name')" title="Delete Service"><button type="button" class="btn"><i class="fas fa-times"></i></button></a>
+                            @{
+                                if (product.IsPublished)
+                                {
+                                    <li class="list-inline-item"><a href="#" title="Unpublish" onclick="confirmUnpublish('@product.Id','@product.Name')"><button class="btn-danger form-control-sm"><i class="fas fa-window-close"></i></button></a></li>
+                                }
+                                else
+                                {
+                                    <li class="list-inline-item"><a href="#" title="Publish" onclick="confirmPublish('@product.Id','@product.Name')"><button class="btn-success form-control-sm"><i class="fas fa-check-square"></i></button></a></li>
+                                }
+                            }
+
+
+                        </td>
+                    </tr>
+                }
+            }
+        </tbody>
+        <tfoot>
+            <tr>
+                <td colspan="4">
+                    <nav aria-label="Page navigation example">
+                        <ul class="pagination">
+                            <li class="page-item"><span class="form-control-plaintext">Page&nbsp;&nbsp;&nbsp;</span></li>
+                            <li class="page-item"><input type="number" value="@Model.Products.PageIndex" class="form-control" style="width:50px;" onKeydown="javascript: if(event.keyCode == 13 && isNaN(parseInt($(this).val()))==false) window.location='/manage/products/index?pageIndex=' + (isNaN(parseInt($(this).val())) ? 1 : parseInt($(this).val())) + '&keyword=@(Model.Products.Keyword)&status=@(Model.Products)" /></li>
+                            <li class="page-item"><span class="form-control-plaintext">&nbsp;&nbsp;&nbsp;of @Model.Products.PageCount&nbsp;&nbsp;&nbsp;</span></li>
+                            @{
+                                var prev = Model.Products.PageIndex - 1;
+                                if (prev > 0)
+                                {
+                                    <li class="page-item"><a class="page-link" href="~/manage/products?keyword=@Model.Products.Keyword&status=@Model.Products&pageSize=@Model.Products.PageSize&pageIndex=@prev"><span aria-hidden="true">&laquo;</span></a></li>
+                                }
+                            }
+                            <li class="page-item"><a class="page-link" href="#">@(Model.Products.PageIndex)</a></li>
+                            @{
+                                var next = Model.Products.PageIndex + 1;
+                                if (next <= Model.Products.PageCount)
+                                {
+                                    <li class="page-item"><a class="page-link" href="~/manage/products/index?keyword=@Model.Products.Keyword&status=@Model.Products&pageSize=@Model.Products.PageSize&pageIndex=@next"><span aria-hidden="true">&raquo;</span></a></li>
+                                }
+                            }
+                        </ul>
+                    </nav>
+                </td>
+            </tr>
+        </tfoot>
+    </table>
+}
+else
+{
+    <p>0 search results.</p>
+}
+
+<!--Model Delete-->
+<div class="modal" tabindex="-1" role="dialog" id="modal-delete-product">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Delete Product</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete <span id="modal-delete-product-name"></span>?</p>
+            </div>
+            <div class="modal-footer">
+                <a href="#" id="modal-delete-product-confirm"><button type="button" class="btn btn-primary">Delete Product</button></a>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+<!--MODAL Unpublish-->
+<div class="modal" tabindex="-1" role="dialog" id="modal-unpublish">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Unpublish Post</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to unpublish <span id="modal-unpublish-name"></span>?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-danger" id="modal-unpublish-button">Yes</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">No</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!--MODAL Publish-->
+<div class="modal" tabindex="-1" role="dialog" id="modal-publish">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Publish Post</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to publish <span id="modal-publish-name"></span>?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-danger" id="modal-publish-button">Yes</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">No</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+<script type="text/javascript">
+
+    ////////////////////UNPUBLISH/////////////////////////////////////////////////////////////////
+    function confirmUnpublish(id, name) {
+        $("#modal-unpublish-name").html(name);
+        $("#modal-unpublish-button").attr("onclick", "UnpublishProduct('" + id + "')");
+        $("#modal-unpublish").modal("show");
+    }
+    function UnpublishProduct(id) {
+        $.ajax({
+            type: "POST",
+            url: "/manage/products/unpublish",
+            data: { id: id },
+            success: function (data) {
+                location.reload();
+            },
+            error: function (xhr) {
+                var response = JSON.parse(xhr.responseText);
+                alert("Error Occured : " + response.errors[0]);
+                location.reload();
+            }
+        });
+    }
+
+
+    //////////////////PUBLISH///////////////////////////////////////////////////////////////////////
+    function confirmPublish(id, name) {
+        $("#modal-publish-name").html(name);
+        $("#modal-publish-button").attr("onclick", "PublishProduct('" + id + "')");
+        $("#modal-publish").modal("show");
+    }
+    function PublishProduct(id) {
+        $.ajax({
+            type: "POST",
+            url: "/manage/products/publish",
+            data: { id: id },
+            success: function (data) {
+                location.reload();
+            },
+            error: function (xhr) {
+                var response = JSON.parse(xhr.responseText);
+                alert("Error Occured : " + response.errors[0]);
+                location.reload();
+            }
+        });
+    }
+
+    function confirmDeleteService(productId, Name) {
+        $("#modal-delete-service-vehicle").html(Name);
+        $("#modal-delete-service-confirm").attr("href", "/manage/products/delete/" + productId);
+        $("#modal-delete-service").modal("show");
+    }
+
+    $("#searchKeyword").keyup(function (event) {
+        if (event.keyCode === 13) {
+            searchTrigger();
+        }
+    });
+
+    function searchTrigger() {
+        window.location = "/manage/products/index?pageIndex=1&keyword=" + $("#searchKeyword").val() + "&status=" + $("#searchStatus").val();
+    }
+
+
+</script>
